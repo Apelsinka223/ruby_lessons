@@ -1,0 +1,43 @@
+require 'open-uri'
+
+task :deliver do
+
+end
+
+namespace :download  do
+  desc 'Скачивает шаблон письма'
+  task :template do
+    puts 'Скачиваю файл...'
+
+    File.open('template.md', 'w') do |file|
+      file.write(open('https://www.dropbox.com/s/7gzqm092ufnbha9/rake.md?dl=1').read)
+    end
+
+    puts 'Справился'
+  end
+
+
+  desc 'Скачивает список адресатов'
+  task :recipients do
+    puts 'Скачиваю файл...'
+
+    File.open('recipients.csv', 'w') do |file|
+      file.write(open('https://www.dropbox.com/s/f9bczyb623uzwee/recipients.csv?dl=1').read)
+    end
+
+    puts 'Справился'
+  end
+
+  namespace :template do
+    desc 'Конвертируем шаблон'
+    task :convert do
+      renderer = Redcarpet::Render::HTML.new
+      markdown = Redcarpet::Markdown.new(renderer, extensions = {})
+      template_markdown = File.read('template.md')
+
+      File.open('app/views/mailers/rake_mailer/lesson_plan.html', 'w') do |file|
+        file.write(markdown, render(template_markdown))
+      end
+    end
+  end
+end
