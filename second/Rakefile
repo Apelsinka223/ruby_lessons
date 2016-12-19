@@ -1,4 +1,7 @@
 require 'open-uri'
+require 'redcarpet'
+require 'action_mailer'
+require 'active_support/rescuable'
 
 task :deliver do
 
@@ -27,17 +30,36 @@ namespace :download  do
 
     puts 'Справился'
   end
+end
 
-  namespace :template do
-    desc 'Конвертируем шаблон'
-    task :convert do
-      renderer = Redcarpet::Render::HTML.new
-      markdown = Redcarpet::Markdown.new(renderer, extensions = {})
-      template_markdown = File.read('template.md')
+namespace :template do
+  desc 'Конвертируем шаблон'
+  task convert: ['download:template'] do
+    puts 'Конвертирую файл'
+    renderer = Redcarpet::Render::HTML.new
+    markdown = Redcarpet::Markdown.new(renderer, extensions = {})
+    template_markdown = File.read('template.md')
 
-      File.open('app/views/mailers/rake_mailer/lesson_plan.html', 'w') do |file|
-        file.write(markdown, render(template_markdown))
-      end
+    File.open('app/views/mailers/rake_mailer/lesson_plan.html', 'w') do |file|
+      file.write(markdown.render(template_markdown))
     end
+
+    puts 'Справился'
+  end
+end
+
+namespace :mailer do
+  task :configure do
+    ActionMailer::Base.view_paths = File.expand_path('../app/views/mailers', __FILE__)
+    ActionMailer::Base.delivery_method = :smtp
+    ActionMailer::Base.smtp_settings = {
+        :address              => "smtp.gmail.com",
+        :port                 => 587,
+        :domain               => "gmail.com",
+        :authentication       => :plain,
+        :user_name            => ENV.fetch('GOOGLE_EMAIL'),
+        :password             => ENV.fetch('GOOGLE_EMAIL_PASSWORD'),
+    }
+
   end
 end
