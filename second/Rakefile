@@ -2,10 +2,11 @@ require 'open-uri'
 require 'redcarpet'
 require 'action_mailer'
 require 'active_support/rescuable'
+require 'dotenv'
+require 'csv'
+require 'ruby-progressbar'
 
-task :deliver do
-
-end
+require_relative 'app/mailers/rake_mailer'
 
 namespace :download  do
   desc 'Скачивает шаблон письма'
@@ -37,7 +38,7 @@ namespace :template do
   task convert: ['download:template'] do
     puts 'Конвертирую файл'
     renderer = Redcarpet::Render::HTML.new
-    markdown = Redcarpet::Markdown.new(renderer, extensions = {})
+ *   markdown = Redcarpet::Markdown.new(renderer, extensions = {})
     template_markdown = File.read('template.md')
 
     File.open('app/views/mailers/rake_mailer/lesson_plan.html', 'w') do |file|
@@ -50,6 +51,8 @@ end
 
 namespace :mailer do
   task :configure do
+    Dotenv.load
+
     ActionMailer::Base.view_paths = File.expand_path('../app/views/mailers', __FILE__)
     ActionMailer::Base.delivery_method = :smtp
     ActionMailer::Base.smtp_settings = {
@@ -61,5 +64,14 @@ namespace :mailer do
         :password             => ENV.fetch('GOOGLE_EMAIL_PASSWORD'),
     }
 
+  end
+
+  task deliver: [:configure] do
+    csv = CSV.read('recipients.csv', headers: true)
+    progressbar = ProgressBar.create(total: csv.size)
+    csv.each do |credentials|
+      RakeMailer.lesson_plan(credentials.fetch('email')).deliver
+      progressbar.increment
+    end
   end
 end

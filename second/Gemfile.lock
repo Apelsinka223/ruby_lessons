@@ -56,6 +56,7 @@ GEM
       loofah (~> 2.0)
     rake (11.3.0)
     redcarpet (3.3.4)
+    ruby-progressbar (1.8.1)
     thread_safe (0.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
@@ -68,6 +69,7 @@ DEPENDENCIES
   dotenv
   rake
   redcarpet
+  ruby-progressbar
 
 BUNDLED WITH
    1.13.6
